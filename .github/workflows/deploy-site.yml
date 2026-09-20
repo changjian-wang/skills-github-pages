@@ -54,16 +54,17 @@ jobs:
           destination: ./_site
       - name: Assemble site
         run: |
-          mkdir -p _site/app
-          cp -a app/dist/. _site/app/
-          test -f _site/index.html
-          test -f _site/app/index.html
-          test ! -d _site/app/node_modules
-          test ! -d _site/app/src
+          mkdir -p _publish/app
+          cp -r _site/. _publish/
+          cp -r app/dist/. _publish/app/
+          test -f _publish/index.html
+          test -f _publish/app/index.html
+          test ! -d _publish/app/node_modules
+          test ! -d _publish/app/src
       - name: Upload site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: _site
+          path: _publish
 
   deploy:
     needs: build

@@ -63,7 +63,7 @@ npm run test:e2e
 1. 保留根目录的 Jekyll 博客和现有文章 URL，React 使用独立的 `app/` 源目录。
 2. Jekyll 排除整个 `app/`，避免发布源码、依赖或测试文件。
 3. Actions 先运行 lint、单元测试和浏览器测试，然后构建博客。
-4. 将 React 的 `dist/` 复制到博客产物的 `app/`，上传一份 Pages artifact。
+4. 将博客产物复制到 runner 可写的 `_publish/`，React 的 `dist/` 放入其 `app/`，上传一份 Pages artifact。
 5. 部署任务依赖构建任务成功，只部署合并后的站点。
 
 仓库 Pages 的 Source 应为 GitHub Actions。推送 `main` 或手动运行
