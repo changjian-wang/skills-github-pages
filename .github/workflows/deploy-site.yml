@@ -1,0 +1,81 @@
+name: Deploy blog and task workspace
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: app
+      - name: Lint React app
+        run: npm run lint
+        working-directory: app
+      - name: Test task data
+        run: npm test
+        working-directory: app
+      - name: Install test browser
+        run: npx playwright install --with-deps --only-shell chromium
+        working-directory: app
+      - name: Build and test React app
+        run: npm run test:e2e
+        working-directory: app
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Build Jekyll blog
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+      - name: Assemble site
+        run: |
+          mkdir -p _site/app
+          cp -a app/dist/. _site/app/
+          test -f _site/index.html
+          test -f _site/app/index.html
+          test ! -d _site/app/node_modules
+          test ! -d _site/app/src
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy site
+        id: deployment
+        uses: actions/deploy-pages@v4
